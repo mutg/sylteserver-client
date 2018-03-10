@@ -63,7 +63,7 @@ export default {
       this.ctx.fillStyle = 'rgba(0, 0, 0, 0.0)'
       this.ctx.clearRect(0, 0,  this.canvas.width, this.canvas.height);
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      var middle = this.canvas.height * 0.76
+      var middle = this.canvas.height * 0.6
       var bar_width = 3
       var bar_gap = 1
       var bar_n = Math.floor(this.canvas.width / (bar_width + bar_gap))
@@ -113,8 +113,9 @@ export default {
         this.ctx.fillRect(xbar, middle + 1, bar_width, y * (this.canvas.height - middle))
       }
 
-      if (this.animate)
+      if (this.animate) {
         requestAnimationFrame(this.drawWave)
+      }
     },
     generate () {
       this.canvas.width = this.canvas.parentNode.clientWidth      
@@ -144,6 +145,7 @@ export default {
       clearTimeout(resizeTimer)
       resizeTimer = setTimeout(() => {
         this.generate()
+        console.log('rei')
       }, 250)
     },
     onMouseMove (e) {
@@ -177,7 +179,6 @@ export default {
     this.drawWave()    
   },
   beforeDestroy () {
-    
     window.removeEventListener('resize', this.onResize)
     this.animate = false
   }

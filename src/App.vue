@@ -37,7 +37,7 @@
       </v-toolbar>
       <login ref="loginDialog" />
       <v-content>
-        <router-view/>     
+        <router-view v-if="initDone"/>     
       </v-content>
     </v-app>
   </div>
@@ -50,7 +50,7 @@ export default {
   name: 'app',
   data () {
     return {
-
+      initDone: false
     }
   },
   components: {
@@ -77,12 +77,16 @@ export default {
       })
       .then((response) => {
         this.$store.dispatch('setUser', response.data.user)
+        this.initDone = true
       })
       .catch((err) => {
         console.log(err)
         localStorage.removeItem('token')
         this.$store.dispatch('setToken', null)
+        this.initDone = true
       })
+    } else {
+      this.initDone = true
     }
   }
 }

@@ -9,7 +9,7 @@
         </v-flex>
         <v-flex>
           <div class="waveform">
-            <waveform :points="track.data.waveformjs" />
+            <waveform :points="track.data.waveformjs" :interactive="true" :active="true" :position="0.5" />
           </div>
         </v-flex>
         <v-flex>

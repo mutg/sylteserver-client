@@ -17,6 +17,8 @@
         </v-container>
         <v-btn @click="upload()">Last opp</v-btn>
         <v-progress-linear :active="uploading" :indeterminate="percentCompleted >= 100" v-model="percentCompleted" />
+        <v-alert dismissible type="error" v-model="error">{{errorText}}</v-alert>
+        <v-alert dismissible type="success" v-model="success">Upload complete!</v-alert>
       </v-flex>
     </v-layout>
   </v-container>
@@ -45,6 +47,9 @@ export default {
     upload () {
       var form = new FormData()
       var data = {}
+      this.error = null
+      this.uploading = true
+      this.success = false
 
       this.tracks.forEach(track => {
         form.append('tracks', track.file)
@@ -52,13 +57,14 @@ export default {
       })
       form.append('data', JSON.stringify(data))
 
-      this.uploading = true
       ContentService.uploadTracks(form, {onUploadProgress: this.onUploadProgress})
       .then(() => {
         this.uploading = false
+        this.success = true
       })
       .catch((err) => {
-        console.log(err)
+        this.error = true
+        this.errorText = err.response.data.error
         this.uploading = false
       })
     }
@@ -66,6 +72,9 @@ export default {
   data () {
     return {
       uploading: false,
+      success: false,
+      error: false,
+      errorText: null,
       percentCompleted: 0,
       tracks: []
     }

@@ -17,9 +17,7 @@
           <v-layout row wrap>
             <v-flex xs12 sm6 md4 lg3 xl2 v-for="track in filteredTracks" :key="track.title" >
               <v-card>
-                <router-link :to="{name: 'sylter', params: {track: track.uri}}">
-                  <v-card-media contain class="waveform" src="/static/waveform.png" height="150"/>
-                </router-link>
+                  <waveform :points="track.data.waveformjs" />
                 <v-card-text>
                   {{track.title}}
                 </v-card-text>
@@ -31,6 +29,7 @@
 </template>
 
 <script>
+import Waveform from '@/components/Waveform'
 import ContentService from '../services/ContentService'
 
 const SORT_NEW_FIRST = 0
@@ -52,6 +51,7 @@ export default {
       ]
     }
   },
+  components: { Waveform },
   methods: {
     changeSort (sortValue) {
       switch (sortValue) {
