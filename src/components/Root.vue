@@ -15,13 +15,8 @@
         </v-layout>
         <v-container fluid grid-list-xl>
           <v-layout row wrap>
-            <v-flex xs12 sm6 md4 lg3 xl2 v-for="track in filteredTracks" :key="track.title" >
-              <v-card>
-                  <waveform :points="track.data.waveformjs" />
-                <v-card-text>
-                  {{track.title}}
-                </v-card-text>
-              </v-card>
+            <v-flex xs12 sm6 md4 lg3 v-for="track in filteredTracks" :key="track.title" >
+              <sylte-card ref="syltecards" :track="track"/>
             </v-flex>
           </v-layout>
         </v-container>
@@ -29,8 +24,10 @@
 </template>
 
 <script>
-import Waveform from '@/components/Waveform'
+import SylteCard from '@/components/SylteCard'
 import ContentService from '../services/ContentService'
+
+var resizeTimer
 
 const SORT_NEW_FIRST = 0
 const SORT_OLD_FIRST = 1
@@ -51,7 +48,7 @@ export default {
       ]
     }
   },
-  components: { Waveform },
+  components: { SylteCard },
   methods: {
     changeSort (sortValue) {
       switch (sortValue) {
@@ -71,6 +68,14 @@ export default {
           break
       }
     },
+    onResize (e) {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        this.$refs.syltecards.forEach(card => {
+          card.redrawWaveform()
+        })
+      }, 250)
+    },
     async getTracks () {
       try {
         const response = await ContentService.getTracks()
@@ -83,8 +88,10 @@ export default {
   },
   created () {
     this.sort = this.sortMethods[0]
-
+    window.addEventListener('resize', this.onResize)
     this.getTracks()
+  },
+  mounted () {
   },
   computed: {
     filteredTracks () {
@@ -92,6 +99,9 @@ export default {
         return (a.title.toLowerCase().indexOf(this.filter.toLowerCase()) > -1) || (a.title.toLowerCase().indexOf(this.filter.toLowerCase()) > -1)
       })
     }
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.onResize)
   }
 }
 </script>

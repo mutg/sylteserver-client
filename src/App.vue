@@ -1,10 +1,29 @@
 <template>
   <div id="app">
     <v-app>
-      <v-toolbar dark color="red lighten-1">
+      <v-toolbar dark color="red">
         <v-toolbar-title  class="white--text">
-          <span class="title" @click="$router.push({name: 'root'})">Sylteserver</span>
+          <span class="title" @click="$router.push('/')">Sylteserver</span>
         </v-toolbar-title>
+        <v-breadcrumbs divider="/">
+            <v-breadcrumbs-item
+              v-if="$route.name"
+              :key="$route.name"
+              :disabled="true"
+            >
+              {{$route.name}}
+            </v-breadcrumbs-item>
+            <v-breadcrumbs-item
+              v-for="param in $route.params"
+              :key="param"
+              :disabled="true"
+            >
+              {{ param }}
+            </v-breadcrumbs-item>
+        </v-breadcrumbs>
+            <v-btn @click="$router.push({name: 'adminpanel'})" flat v-if="$store.state.isUserLoggedIn && $store.state.user.admin">
+            <v-icon>settings</v-icon>
+          </v-btn>
         <v-spacer/>
         <v-toolbar-items>
           <v-btn @click="$router.push({name: 'uploadtracks'})" v-if="loggedIn" flat>
@@ -39,12 +58,14 @@
       <v-content>
         <router-view v-if="initDone"/>     
       </v-content>
+      <audio-player />
     </v-app>
   </div>
 </template>
 
 <script>
 import Login from '@/components/Login'
+import AudioPlayer from '@/components/AudioPlayer'
 import AuthenticationService from '@/services/AuthenticationService'
 export default {
   name: 'app',
@@ -53,9 +74,7 @@ export default {
       initDone: false
     }
   },
-  components: {
-    Login
-  },
+  components: { AudioPlayer, Login },
   methods: {
     logout () {
       this.$store.dispatch('setToken', null)

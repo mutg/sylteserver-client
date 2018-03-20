@@ -4,7 +4,21 @@
 
 <script>
 /* eslint-disable */
-var resizeTimer;
+import { EventBus } from '@/event-bus'
+
+function hexToRgbA(hex){
+    var c;
+    if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+        c= hex.substring(1).split('');
+        if(c.length== 3){
+            c= [c[0], c[0], c[1], c[1], c[2], c[2]]
+        }
+        c= '0x'+c.join('');
+        return new RGBA((c>>16)&255, (c>>8)&255, c&255, 1)
+    }
+    throw new Error('Bad Hex')
+}
+
 
 function interpolateRGBA(startRGB, endRGB, a, e) {
   var rgb = {
@@ -24,19 +38,16 @@ function RGBA(r, g, b, a) {
   this.a = a || 0
 }
 
-var colored = new RGBA(255,69,0, 1)
 var grey = new RGBA(140,140,140, 1)
 
-function barColored(alpha) {
-  colored.a = alpha
-  return colored
+function changealpha(color, alpha) {
+  color.a = alpha
+  return color
 }
 
-function barGrey(alpha) {
-  grey.a = alpha
-  return grey
-}
-
+var mouseX
+var bar_width = 1
+var bar_gap = 0
 
 RGBA.prototype.toString = function() {
   return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.a+ ')'
@@ -45,52 +56,57 @@ RGBA.prototype.toString = function() {
 export default {
   data () {
     return {
-      waveform: null,
       canvas: null,
       ctx: null,
-      color: null,
-      position: 0.0,
-      interpolated: [],
       animate: true,
       hover: false,
-      mouseX: 0.0
+      rgbColor: new RGBA(255,69,0, 1),
     }
   },
-  props: ['points'],
+  watch: {
+    active (isActive) {
+      if (isActive) {
+        this.updateLoop()
+      }
+    }
+  },
+  props: ['track','active','interactive', 'audio', 'color'],
   methods: {
     drawWave () {
       // clear!
       this.ctx.fillStyle = 'rgba(0, 0, 0, 0.0)'
       this.ctx.clearRect(0, 0,  this.canvas.width, this.canvas.height);
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      var middle = this.canvas.height * 0.6
-      var bar_width = 3
-      var bar_gap = 1
-      var bar_n = Math.floor(this.canvas.width / (bar_width + bar_gap))
+      var middle = this.canvas.height * 0.7
+      for (var i = 0; i < this.$_interpolated.length; i++) {
+        //var y = this.$_interpolated[Math.round((i / bar_n) * this.$_interpolated.length)]
+        var y = this.$_interpolated[i]
 
-      for (var i = 0; i < bar_n; i++) {
-        var y = this.interpolated[Math.floor((i / bar_n) * this.interpolated.length)]
-        y = y
-
-        var positionBarFloat = this.position * bar_n
-        var positionBarIndex = Math.floor(this.position * bar_n)
-        var mouseBarIndex = Math.floor((this.mouseX / this.canvas.width) * bar_n)
+        let position = 1
+        if (this.audio && this.active) {
+          position = this.audio.currentTime / this.track.duration
+        }
+        
+        var positionBarFloat = position * this.$_interpolated.length
+        var positionBarIndex = Math.ceil(position * this.$_interpolated.length)
+        var mouseBarIndex = Math.ceil((mouseX / this.canvas.width) * this.$_interpolated.length)
         var barStrength = positionBarFloat % 1
         const xbar = i * (bar_gap + bar_width)
         // this.ctx.fillStyle = 'rgb('+ 255 * barStrength + ', ' + 162 * barStrength + ', ' + 127 * barStrength + ')'
 
-        var interpolatedColor = interpolateRGBA(barGrey(1), barColored(1), barStrength, 1)
+        var interpolatedColor = interpolateRGBA(changealpha(grey, 1), changealpha(this.rgbColor, 1), 1, 1)
 
         if (positionBarIndex > i) {
-          this.ctx.fillStyle = barColored(1)
+          this.ctx.fillStyle = changealpha(this.rgbColor, 1)
         } else {
-          this.ctx.fillStyle = barGrey(1)      
+          this.ctx.fillStyle = changealpha(grey, 1)      
         }
 
-        if (positionBarIndex === i) {
+        if (this.active && positionBarIndex === i) {
           this.ctx.fillStyle = interpolatedColor
         }
 
+        
         if (this.hover && mouseBarIndex === i) {
             this.ctx.fillStyle = 'yellow'
         }
@@ -99,27 +115,29 @@ export default {
 
 
         if (positionBarIndex > i) {
-          this.ctx.fillStyle = barColored(0.3)
+          this.ctx.fillStyle = changealpha(this.rgbColor, 0.3)
         } else {
-          this.ctx.fillStyle = barGrey(0.3)
+          this.ctx.fillStyle = changealpha(grey, 0.3)
         }
 
         interpolatedColor.a = 0.3
 
-        if (positionBarIndex === i) {
+        if (this.active && positionBarIndex === i) {
           this.ctx.fillStyle = interpolatedColor
         }
 
         this.ctx.fillRect(xbar, middle + 1, bar_width, y * (this.canvas.height - middle))
       }
-
-      if (this.animate) {
-        requestAnimationFrame(this.drawWave)
+    },
+    updateLoop () {
+      this.drawWave()
+      if (this.animate && this.active) {
+        requestAnimationFrame(this.updateLoop)
       }
     },
     generate () {
       this.canvas.width = this.canvas.parentNode.clientWidth      
-      function interpolateArray(data, fitCount) {
+      function interpolateArray(data, fitCount) { 
 
         var linearInterpolate = function(before, after, atPoint) {
           return before + (after - before) * atPoint;
@@ -138,32 +156,29 @@ export default {
         newData[fitCount - 1] = data[data.length - 1]; // for new allocation
         return newData;
       };
-
-      this.interpolated = interpolateArray(this.points, this.canvas.width)
-    },
-    onResize (e) {
-      clearTimeout(resizeTimer)
-      resizeTimer = setTimeout(() => {
-        this.generate()
-        console.log('rei')
-      }, 250)
+      
+      this.$_interpolated = interpolateArray(this.track.data.waveformjs, Math.ceil(this.canvas.width / (bar_width + bar_gap)))
     },
     onMouseMove (e) {
+      if (!this.interactive) return
       this.hover = true
       var rect = e.target.getBoundingClientRect(),
           x = e.clientX - rect.left,
           y = e.clientY - rect.top
-
-      this.mouseX = x
+      mouseX = x
 
     },
     onMouseClick (e) {
+      if (!this.interactive) return
       var rect = e.target.getBoundingClientRect(),
           x = e.clientX - rect.left
 
-      this.position = x / this.canvas.width
+      if (this.active) {
+        EventBus.$emit('setPosition', x / this.canvas.width)
+      }
     },
     onMouseOut (e) {
+      if (!this.interactive) return
       this.hover = false
     }
   },
@@ -173,14 +188,24 @@ export default {
     this.canvas.addEventListener('mouseout', this.onMouseOut)
     this.canvas.addEventListener('click', this.onMouseClick)
     this.ctx = this.canvas.getContext('2d')
-    window.addEventListener('resize', this.onResize)
 
     this.generate()
-    this.drawWave()    
+    if (!this.active) {
+      this.drawWave()
+    } else {
+      this.updateLoop()
+    }
   },
   beforeDestroy () {
-    window.removeEventListener('resize', this.onResize)
     this.animate = false
+  }, 
+  created () {
+    this.$_interpolated = []
+    try {
+      this.rgbColor = hexToRgbA(this.color)
+    } catch (error) {
+      console.log(error)
+    }
   }
 }
 </script>

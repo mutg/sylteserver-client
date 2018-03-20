@@ -5,6 +5,7 @@ import Register from '@/components/Register'
 import User from '@/components/User'
 import Track from '@/components/ShowTrack'
 import Upload from '@/components/Upload'
+import AdminPanel from '@/components/AdminPanel'
 
 Vue.use(Router)
 
@@ -12,7 +13,6 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'root',
       component: Root
     },
     {
@@ -34,6 +34,11 @@ export default new Router({
       path: '/sylter/:track',
       name: 'sylter',
       component: Track
+    },
+    {
+      path: '/adminpanel',
+      name: 'adminpanel',
+      component: AdminPanel
     },
     {
       path: '/sylter',

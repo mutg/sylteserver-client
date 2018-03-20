@@ -9,31 +9,26 @@
         </v-flex>
         <v-flex>
           <div class="waveform">
-            <waveform :points="track.data.waveformjs" :interactive="true" :active="true" :position="0.5" />
+            <waveform ref="waveform" :interactive="true" :color="track.color" :active="isActive" :audio="audioPlayer.audio" :track="track" />
           </div>
         </v-flex>
         <v-flex>
-          <v-layout row>
-            <v-flex>
-              <v-card>
-                <v-card-text>
-                  {{track.description}}
-                </v-card-text>
-              </v-card>
-            </v-flex>
-            <v-flex>
-              hey
-            </v-flex>
-          </v-layout>
+          <v-btn v-if="false" @click="onPlay">
+            Play
+          </v-btn>
         </v-flex>
       </v-layout>
-    </div>
+    </div>  
   </v-container>
 </template>
 
 <script>
 import ContentService from '../services/ContentService'
 import Waveform from '@/components/Waveform'
+import { mapGetters } from 'vuex'
+import { EventBus } from '@/event-bus'
+
+var resizeTimer
 
 export default {
   data () {
@@ -41,18 +36,45 @@ export default {
       track: null
     }
   },
+  computed: {
+    isActive () {
+      if (this.audioPlayer.track) {
+        return this.audioPlayer.track.uri === this.track.uri
+      }
+      return false
+    },
+    ...mapGetters({
+        audioPlayer: 'getPlayer'      
+    })
+  },
   components: { Waveform },
   created () {
     this.findTrack()
   },
+  mounted () {
+    window.addEventListener('resize', this.onResize)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.onResize)
+  },
   methods: {
+    onPlay (e) {
+      EventBus.$emit('setTrack', this.track)
+    },
     findTrack () {
-      ContentService.getTracks(this.$route.params.track)
+      ContentService.getTracks({uri: this.$route.params.track})
       .then(response => {
         if (response.data) {
           this.track = response.data[0]
         }
       })
+    },
+    onResize (e) {
+      clearTimeout(resizeTimer)
+      resizeTimer = setTimeout(() => {
+        this.$refs.waveform.generate()
+        this.$refs.waveform.drawWave()
+      }, 250)
     }
   },
   watch: {
