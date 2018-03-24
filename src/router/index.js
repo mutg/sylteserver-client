@@ -13,32 +13,50 @@ export default new Router({
   routes: [
     {
       path: '/',
-      component: Root
+      component: Root,
+      meta: {
+        title: 'Home'
+      }
     },
     {
-      path: '/uploadtracks',
-      name: 'uploadtracks',
-      component: Upload
+      path: '/upload',
+      name: 'upload',
+      component: Upload,
+      meta: {
+        title: 'Upload'
+      }
     },
     {
       path: '/register',
       name: 'register',
-      component: Register
+      component: Register,
+      meta: {
+        title: 'Register'
+      }
     },
     {
       path: '/user',
       name: 'user',
-      component: User
+      component: User,
+      meta: {
+        title: 'User Panel'
+      }
     },
     {
       path: '/sylter/:track',
       name: 'sylter',
-      component: Track
+      component: Track,
+      meta: {
+        title: 'Sylter'
+      }
     },
     {
       path: '/adminpanel',
       name: 'adminpanel',
-      component: AdminPanel
+      component: AdminPanel,
+      meta: {
+        title: 'Admin'
+      }
     },
     {
       path: '/sylter',

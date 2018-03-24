@@ -7,13 +7,12 @@
         </v-toolbar-title>
         <v-breadcrumbs divider="/">
             <v-breadcrumbs-item
-              v-if="$route.name"
-              :key="$route.name"
+              v-if="$route.meta.title"
+              :key="$route.meta.title"
               :disabled="true"
             >
-              {{$route.name}}
-            </v-breadcrumbs-item>
-            <v-breadcrumbs-item
+              {{$route.meta.title}}
+            </v-breadcrumbs-item><v-breadcrumbs-item
               v-for="param in $route.params"
               :key="param"
               :disabled="true"
@@ -21,12 +20,12 @@
               {{ param }}
             </v-breadcrumbs-item>
         </v-breadcrumbs>
-            <v-btn @click="$router.push({name: 'adminpanel'})" flat v-if="$store.state.isUserLoggedIn && $store.state.user.admin">
-            <v-icon>settings</v-icon>
-          </v-btn>
+        <v-btn @click="$router.push({name: 'adminpanel'})" flat v-if="$store.state.isUserLoggedIn && $store.state.user.admin">
+          <v-icon>settings</v-icon>
+        </v-btn>
         <v-spacer/>
         <v-toolbar-items>
-          <v-btn @click="$router.push({name: 'uploadtracks'})" v-if="loggedIn" flat>
+          <v-btn @click="$router.push({name: 'upload'})" v-if="loggedIn" flat>
             <v-icon>file_upload</v-icon>
           </v-btn>
           <v-btn flat

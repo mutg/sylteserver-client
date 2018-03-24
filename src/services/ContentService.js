@@ -11,7 +11,10 @@ export default {
     )
   },
   uploadTracks (form, config) {
-    return Api().post('tracks', form, config)
+    return Api().post('tracks/upload', form, config)
+  },
+  getUploadStatus(id) {
+    return Api().get('tracks/upload/' + id)
   },
   scanForNewTracks () {
     return Api().post('scan')
