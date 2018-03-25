@@ -22,7 +22,7 @@
         </v-container>
         <v-container v-else>
           <v-card>
-            <v-list two-line>
+            <v-list two-line v-if="uploadedTracks">
               <template v-for="(item, index) in uploadedTracks">
                 <v-list-tile
                   :color="item.status.done ? (item.status.error ? 'red' : 'green lighten-2') : ''"
@@ -57,20 +57,40 @@
                 <v-divider v-if="index + 1 < uploadedTracks.length" :key="index"></v-divider>
               </template>
             </v-list>
+            <v-card-title v-else>
+              Laster opp sylter...
+            </v-card-title>
           </v-card>
-          <v-btn v-if="!uploading" @click="selectFiles = true">Ny opplasting</v-btn>          
+          <v-btn v-if="!uploading" @click="newUpload()">Ny opplasting</v-btn>          
           <v-progress-linear :active="uploading" :indeterminate="percentCompleted >= 100" v-model="percentCompleted" />
         </v-container>
         <v-alert dismissible type="error" v-model="error">{{errorText}}</v-alert>
-        <v-alert dismissible type="success" v-model="success">Upload complete!</v-alert>
+        <v-alert dismissible type="success" v-model="success">Fullført!</v-alert>
+        <v-alert dismissible type="warning" v-model="warning">Fullført med feil...</v-alert>
       </v-flex>
     </v-layout>
   </v-container>
 </template>
 <script>
 import ContentService from '@/services/ContentService'
+
+function hasStatusError (trackStatusObject) {
+  for (const key in trackStatusObject) {
+    if (trackStatusObject.hasOwnProperty(key)) {
+      const element = trackStatusObject[key];
+      if (element.status.error) return true
+    }
+  }
+  return false
+}
+
 export default {
   methods: {
+    newUpload() {
+      this.selectFiles = true
+      this.uploadedTracks = null
+      this.tracks = []
+    },
     goToSylte (uri) {
       if (uri) {
         this.$router.push({name: 'sylter', params: {track: uri}})
@@ -117,7 +137,7 @@ export default {
                 var uploadStatus = response.data
                 that.uploadedTracks = uploadStatus.tracks
                 if (uploadStatus.complete) {
-                  return resolve()
+                  return resolve(hasStatusError(uploadStatus.tracks))
                 } else {
                   setTimeout(poll, 3000)                  
                 }
@@ -128,14 +148,18 @@ export default {
           })()
         })
       })
-      .then(() => {
+      .then((hasErrors) => {
         this.uploading = false
-        this.success = true
+        if (!hasErrors) {
+          this.success = true
+        } else {
+          this.warning = true
+        }
       })
       .catch((err) => {
         console.log(err)
         this.error = true
-        this.errorText = err
+        this.errorText = err.response.data.error || err.toString()
         this.uploading = false
         this.selectFiles = true
       })
@@ -144,7 +168,8 @@ export default {
   data () {
     return {
       selectFiles: true,
-      uploadedTracks: [],
+      warning: false,
+      uploadedTracks: null,
       processing: false,
       uploading: false,
       success: false,
