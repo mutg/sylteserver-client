@@ -53,6 +53,7 @@
           </v-menu>
         </v-toolbar-items>
       </v-toolbar>
+      <upload-widget ref="uploadWidget" />
       <login ref="loginDialog" />
       <v-content>
         <router-view v-if="initDone"/>     
@@ -66,6 +67,7 @@
 import Login from '@/components/Login'
 import AudioPlayer from '@/components/AudioPlayer'
 import AuthenticationService from '@/services/AuthenticationService'
+import UploadWidget from '@/components/UploadWidget'
 export default {
   name: 'app',
   data () {

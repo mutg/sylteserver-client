@@ -14,6 +14,12 @@ export default new Vuex.Store({
       paused: true,
       audio: null
     },
+    upload: {
+      uploadInProgress: false,
+      uploadState: 'complete', // 'uploading' 'processing' 'error' 'warning' 'complete'
+      uploadStatus: null,
+      uploadId: 0
+    },
     user: null,
     token: null,
     isUserLoggedIn: false
